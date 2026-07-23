@@ -30,7 +30,17 @@ h3 { color: #facc15; font-weight: 700 !important; margin-top: 25px !important; b
 st.markdown(CUSTOM_DASHBOARD_STYLING, unsafe_allow_html=True)
 st.write("<h1>Sis⚽nke Football Analytics and Prediction</h1>", unsafe_allow_html=True)
 
-# Mapped table matching Sisonke layout strings to official API-Football Division IDs
+# --- LIVE API-FOOTBALL QUOTA AND LIMIT MONITORING TOP ROW PANEL ---
+if "api_quota_left" in st.session_state:
+    q_col1, q_col2, q_col3 = st.columns(3)
+    with q_col1:
+        st.metric("API-Football Daily Limit Ceiling", f"{st.session_state.get('api_quota_max', '100')} Requests")
+    with q_col2:
+        st.metric("Remaining Available Calls (Safe Balance)", f"{st.session_state.get('api_quota_left', 'N/A')} Left")
+    with q_col3:
+        st.metric("Account Subscription Tier", f"{st.session_state.get('api_account_tier', 'Free / RapidAPI')}")
+    st.markdown("---")
+
 API_LEAGUE_ID_MAP = {
     "uefa champions league": 2, "south africa": 288, "england": 39, "scotland": 179, "spain": 140,
     "germany": 78, "italy": 135, "brazil": 71, "egypt": 233, "usa": 253,
@@ -85,8 +95,14 @@ if api_sync_triggered:
                     
                 api_response = requests.get(api_url, headers=api_headers, params=api_params, timeout=15)
                 api_data = api_response.json()
-                compiled_api_rows = []
                 
+                # Capture metadata headers sent back by API-Football to feed top metrics
+                res_headers = api_response.headers
+                st.session_state["api_quota_max"] = res_headers.get("x-ratelimit-requests-limit", "100")
+                st.session_state["api_quota_left"] = res_headers.get("x-ratelimit-requests-remaining", "N/A")
+                st.session_state["api_account_tier"] = "Active Subscription" if int(res_headers.get("x-ratelimit-requests-limit", 0)) > 100 else "Free Plan Tier"
+                
+                compiled_api_rows = []
                 if "response" in api_data and api_data["response"]:
                     for item in api_data["response"]:
                         f_meta, teams, goals = item["fixture"], item["teams"], item["goals"]
@@ -156,8 +172,8 @@ if api_sync_triggered:
                     else:
                         new_api_df.to_csv(storage_path, index=False)
                         st.sidebar.success("📁 Local database created on hard drive partition.")
-                        
                     st.success("⚡ SUCCESS! Network pull fully completed and saved to disk.")
+                    st.rerun() # Refresh app screen layout to draw current quota cards instantly
                 else:
                     st.warning("⚠️ No data columns received.")
             except Exception as api_err:
@@ -365,7 +381,7 @@ with tab_past:
                         server.sendmail(msg['From'], [recipient], msg.as_string())
                     server.quit()
                     st.toast("📬 Coupon successfully broadcasted via SMS and Email!")
-                except Exception as mail_err:
+                except:
                     pass
             
             c_l, c_r = st.columns(2)
