@@ -265,7 +265,7 @@ with tab_past:
     else:
         st.info("No historical matches found for this filter combination.")
         with tab_pred:
- options = {f"[{r['league_country'].upper()}] {r['home_team']} vs {r['away_team']} ({pd.to_datetime(r['match_timestamp']).strftime('%Y-%m-%d')})": r for idx, r in filtered_df.iterrows()}
+    options = {f"[{r['league_country'].upper()}] {r['home_team']} vs {r['away_team']} ({pd.to_datetime(r['match_timestamp']).strftime('%Y-%m-%d')})": r for idx, r in filtered_df.iterrows()}
     if options:
         sel_match = st.selectbox("Select Profile Target fixture:", list(options.keys()))
         if sel_match:
