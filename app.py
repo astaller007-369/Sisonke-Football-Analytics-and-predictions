@@ -173,7 +173,7 @@ if api_sync_triggered:
                         new_api_df.to_csv(storage_path, index=False)
                         st.sidebar.success("📁 Local database created on hard drive partition.")
                     st.success("⚡ SUCCESS! Network pull fully completed and saved to disk.")
-                    st.rerun() # Refresh app screen layout to draw current quota cards instantly
+                    st.rerun()
                 else:
                     st.warning("⚠️ No data columns received.")
             except Exception as api_err:
@@ -236,6 +236,7 @@ raw_master_df = full_validation_df.copy()
 raw_master_df["match_timestamp"] = pd.to_datetime(raw_master_df["match_timestamp"])
 filtered_df = raw_master_df[raw_master_df["league_country"].str.lower().str.strip() == selected_league_filter.lower().strip()].reset_index(drop=True)
 
+# Build unified visual navigation interface panels
 tab_pred, tab_tables, tab_history, tab_past = st.tabs(["📅 PROJECTIONS", "🌍 STANDINGS", "📜 BACKTESTER", "📜 PAST GAMES"])
 with tab_tables:
     st.markdown(f"### Dynamic Standings Matrix: {selected_league_filter.upper()}")
