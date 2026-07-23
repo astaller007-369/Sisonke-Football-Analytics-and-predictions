@@ -274,24 +274,24 @@ with tab_past:
             
             o_col1, o_col2, o_col3, o_col4 = st.columns(4)
             with o_col1:
-                odds_1 = st.number_input("Home Odds (1):", min_value=1.01, value=2.10, step=0.05)
-                odds_1X = st.number_input("Double Chance Odds (1X):", min_value=1.01, value=1.35, step=0.05)
-                odds_btts_y = st.number_input("BTTS Yes Odds:", min_value=1.01, value=1.80, step=0.05)
+                odds_1 = st.number_input("Home Odds (1):", min_value=1.01, value=2.10, step=0.05, key="o_1")
+                odds_1X = st.number_input("Double Chance Odds (1X):", min_value=1.01, value=1.35, step=0.05, key="o_1x")
+                odds_btts_y = st.number_input("BTTS Yes Odds:", min_value=1.01, value=1.80, step=0.05, key="o_by")
             with o_col2:
-                odds_X = st.number_input("Draw Odds (X):", min_value=1.01, value=3.20, step=0.05)
-                odds_X2 = st.number_input("Double Chance Odds (X2):", min_value=1.01, value=1.65, step=0.05)
-                odds_btts_n = st.number_input("BTTS No Odds:", min_value=1.01, value=1.95, step=0.05)
+                odds_X = st.number_input("Draw Odds (X):", min_value=1.01, value=3.20, step=0.05, key="o_x")
+                odds_X2 = st.number_input("Double Chance Odds (X2):", min_value=1.01, value=1.65, step=0.05, key="o_x2")
+                odds_btts_n = st.number_input("BTTS No Odds:", min_value=1.01, value=1.95, step=0.05, key="o_bn")
             with o_col3:
-                odds_2 = st.number_input("Away Odds (2):", min_value=1.01, value=3.40, step=0.05)
-                odds_12 = st.number_input("Double Chance Odds (12):", min_value=1.01, value=1.30, step=0.05)
-                odds_dnb1 = st.number_input("Draw No Bet Home (DNB1):", min_value=1.01, value=1.50, step=0.05)
+                odds_2 = st.number_input("Away Odds (2):", min_value=1.01, value=3.40, step=0.05, key="o_2")
+                odds_12 = st.number_input("Double Chance Odds (12):", min_value=1.01, value=1.30, step=0.05, key="o_12")
+                odds_dnb1 = st.number_input("Draw No Bet Home (DNB1):", min_value=1.01, value=1.50, step=0.05, key="o_d1")
             with o_col4:
-                odds_over = st.number_input("Over 2.5 Goals Odds:", min_value=1.01, value=1.95, step=0.05)
-                odds_under = st.number_input("Under 2.5 Goals Odds:", min_value=1.01, value=1.85, step=0.05)
-                odds_dnb2 = st.number_input("Draw No Bet Away (DNB2):", min_value=1.01, value=2.40, step=0.05)
+                odds_over = st.number_input("Over 2.5 Goals Odds:", min_value=1.01, value=1.95, step=0.05, key="o_ov")
+                odds_under = st.number_input("Under 2.5 Goals Odds:", min_value=1.01, value=1.85, step=0.05, key="o_un")
+                odds_dnb2 = st.number_input("Draw No Bet Away (DNB2):", min_value=1.01, value=2.40, step=0.05, key="o_d2")
 
-            h_status = st.selectbox("Home Status:", ["stable", "promoted", "relegated"])
-            a_status = st.selectbox("Away Status:", ["stable", "promoted", "relegated"])
+            h_status = st.selectbox("Home Status:", ["stable", "promoted", "relegated"], key="h_stat")
+            a_status = st.selectbox("Away Status:", ["stable", "promoted", "relegated"], key="a_stat")
             
             league_key = selected_league_filter.lower().strip()
             baseline_goals = engine.COMPETITION_MATRIX.get(league_key, {"baseline_goals": 2.65}).get("baseline_goals", 2.65)
