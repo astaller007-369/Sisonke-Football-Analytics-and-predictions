@@ -267,7 +267,7 @@ with tab_past:
         with tab_pred:
             options = {f"[{r['league_country'].upper()}] {r['home_team']} vs {r['away_team']} ({pd.to_datetime(r['match_timestamp']).strftime('%Y-%m-%d')})": r for idx, r in filtered_df.iterrows()}
             if options:
-        sel_match = st.selectbox("Select Profile Target fixture:", list(options.keys()))
+               sel_match = st.selectbox("Select Profile Target fixture:", list(options.keys()))
         if sel_match:
             target = options[sel_match]
             target_ts = pd.to_datetime(target["match_timestamp"])
