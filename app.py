@@ -362,7 +362,7 @@ with tab_pred:
                 sd = min(h_s.get("games_played", 0), a_s.get("games_played", 0))
                 confidence = min(100, int((sd / 12.0) * 100)) if sd > 0 else 15
                 bet_rec = "🔥 HIGH BET (KELLY MAXIMUM)" if best_ev >= 0.071 else "❌ NO BET"
-                                if "HIGH" in bet_rec:
+                if "HIGH" in bet_rec:
                     try:
                         email_body = (
                             f"========================================\n"
