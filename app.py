@@ -409,5 +409,3 @@ with tab_past:
         st.markdown("### 🎫 Calibrated Ticket Slip")
         ticket = f"MATCH: {target['home_team']} vs {target['away_team']}\nPOSITION: {optimal_bet}\nSTAKE: {fractional_scale_stake}%"
         st.text_area("Ticket Log Slip", value=ticket, height=200)
-else:
-    st.info("No fixtures found.")
