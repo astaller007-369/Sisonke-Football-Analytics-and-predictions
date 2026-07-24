@@ -101,7 +101,6 @@ with st.sidebar:
     st.markdown("### 🚨 Live Notification Routes")
     ui_email_recipient = st.text_input("Primary Email:", value="vvuyo007@gmail.com")
     ui_sms_recipient = st.text_input("Mobile SMS:", value="0750739223@sms.telkom.co.za")
-    # USER OPTED NOT TO HARDCODE THE PASSWORD FOR NOW; KEEPING THE ADJUSTABLE FIELD
     ui_google_app_password = st.text_input("Password Key:", type="password", value="your_free_google_app_password")
     # --- LIVE API AUTOMATION LAYER ---
 if api_sync_triggered:
@@ -123,102 +122,107 @@ if api_sync_triggered:
                     api_params = {"league": str(league_id), "season": str(current_year), "last": "20", "status": "FT"}
                     
                 api_response = requests.get(api_url, headers=api_headers, params=api_params, timeout=15)
-                res_headers = api_response.headers
-                st.session_state["api_quota_max"] = res_headers.get("x-ratelimit-requests-limit", "100")
-                st.session_state["api_quota_left"] = res_headers.get("x-ratelimit-requests-remaining", "N/A")
                 
-                try:
-                    limit_val = int(res_headers.get("x-ratelimit-requests-limit", 0))
-                except ValueError:
-                    limit_val = 0
-                st.session_state["api_account_tier"] = "Active Subscription" if limit_val > 100 else "Free Plan Tier"
-                
-                api_data = api_response.json()
-                compiled_api_rows = []
-                
-                if "response" in api_data and api_data["response"]:
-                    for item in api_data["response"]:
-                        f_meta = item.get("fixture", {})
-                        teams = item.get("teams", {})
-                        goals = item.get("goals", {})
-                        stats_list = item.get("statistics", [])
-                        
-                        s_dict = {}
-                        for s_entry in stats_list:
-                            team_name = s_entry.get("team", {}).get("name")
-                            actual_stats = s_entry.get("statistics", [])
-                            if team_name and actual_stats:
-                                s_dict[team_name] = {st_item["type"]: st_item["value"] for st_item in actual_stats if "type" in st_item}
-                        
-                        h_name = teams.get("home", {}).get("name", "Unknown Home")
-                        a_name = teams.get("away", {}).get("name", "Unknown Away")
-                        h_s = s_dict.get(h_name, {})
-                        a_s = s_dict.get(a_name, {})
-                        
-                        def get_pct(w, t):
-                            if w is None or t is None: return 0.50
-                            try:
-                                w_clean = float(str(w).replace("%", "").strip())
-                                t_clean = float(str(t).replace("%", "").strip())
-                                return round(w_clean / max(1.0, t_clean), 2)
-                            except: return 0.50
-                        
-                        row_dict = {
-                            "league_country": target_sync_country, "match_timestamp": f_meta.get("date", datetime.datetime.now().isoformat()),
-                            "home_team": h_name, "away_team": a_name,
-                            "home_goals": goals.get("home") if goals.get("home") is not None else np.nan,
-                            "away_goals": goals.get("away") if goals.get("away") is not None else np.nan,
-                            "home_sot": float(h_s.get("Shots on Goal", 0)) if (h_s.get("Shots on Goal") is not None and "Upcoming" not in sync_mode) else np.nan,
-                            "away_sot": float(a_s.get("Shots on Goal", 0)) if (a_s.get("Shots on Goal") is not None and "Upcoming" not in sync_mode) else np.nan,
-                            "home_big_chances": float(h_s.get("Big Chances Created", 0)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_big_chances": float(a_s.get("Big Chances Created", 0)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_box_touches": float(h_s.get("Touches in Opposition Box", 15)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_box_touches": float(a_s.get("Touches in Opposition Box", 15)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_through_passes": float(h_s.get("Through Passes", 2)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_through_passes": float(a_s.get("Through Passes", 2)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_final_third_entries": float(h_s.get("Final Third Entries", 35)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_final_third_entries": float(a_s.get("Final Third Entries", 35)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_interceptions": float(h_s.get("Interceptions", 12)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_interceptions": float(a_s.get("Interceptions", 12)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_recoveries": float(h_s.get("Ball Recoveries", 45)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_recoveries": float(a_s.get("Ball Recoveries", 45)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_saves": float(h_s.get("Goalkeeper Saves", 2)) if "Upcoming" not in sync_mode else np.nan,
-                            "away_saves": float(a_s.get("Goalkeeper Saves", 2)) if "Upcoming" not in sync_mode else np.nan,
-                            "home_ground_duels_won_pct": get_pct(h_s.get("Ground Duels Won"), h_s.get("Ground Duels Total")),
-                            "away_ground_duels_won_pct": get_pct(a_s.get("Ground Duels Won"), a_s.get("Ground Duels Total")),
-                            "home_aerial_duels_won_pct": get_pct(h_s.get("Aerial Duels Won"), h_s.get("Aerial Duels Total")),
-                            "away_aerial_duels_won_pct": get_pct(a_s.get("Aerial Duels Won"), a_s.get("Aerial Duels Total")),
-                            "home_dribbles_won_pct": get_pct(h_s.get("Successful Dribbles"), h_s.get("Total Dribbles")),
-                            "away_dribbles_won_pct": get_pct(h_s.get("Successful Dribbles"), h_s.get("Total Dribbles")),
-                            "home_tackles_won_pct": get_pct(h_s.get("Tackles Won"), h_s.get("Total Tactics")),
-                            "away_tackles_won_pct": get_pct(a_s.get("Tackles Won"), a_s.get("Total Tackles")),
-                            "home_passes_final_third_pct": get_pct(h_s.get("Passes Accurate"), h_s.get("Total Passes")),
-                            "away_passes_final_third_pct": get_pct(a_s.get("Passes Accurate"), f"{h_s.get('Total Passes', 1)}") if "Upcoming" in sync_mode else get_pct(a_s.get("Passes Accurate"), a_s.get("Total Passes")),
-                            "home_rest_days": 5, "away_rest_days": 5
-                        }
-                        compiled_api_rows.append(row_dict)
-                        
-                if compiled_api_rows:
-                    new_api_df = pd.DataFrame(compiled_api_rows)
-                    st.session_state["api_downloaded_data"] = new_api_df
-                    
-                    storage_path = "master_sisonke_database.csv"
-                    if os.path.exists(storage_path):
-                        try:
-                            existing_disk_df = pd.read_csv(storage_path)
-                            combined_disk_df = pd.concat([existing_disk_df, new_api_df], ignore_index=True)
-                            combined_disk_df.drop_duplicates(subset=["league_country", "match_timestamp", "home_team", "away_team"], keep="last", inplace=True)
-                            combined_disk_df.to_csv(storage_path, index=False)
-                            st.sidebar.success("💾 Server disk copy successfully updated in background layout.")
-                        except Exception as disk_err:
-                            st.sidebar.error(f"Write failure: {disk_err}")
-                    else:
-                        new_api_df.to_csv(storage_path, index=False)
-                        st.sidebar.success("📁 Local database created on hard drive partition.")
-                    st.success("⚡ SUCCESS! Network pull fully completed and saved to disk.")
-                    st.rerun()
+                # FIXED: Safety guard to catch HTML server errors (like 403/404) before they crash the JSON parser
+                if api_response.status_code != 200:
+                    st.error(f"❌ Server Connection Rejected! Status Code: {api_response.status_code}. Details: {api_response.text[:200]}")
                 else:
-                    st.warning("⚠️ No data columns received.")
+                    res_headers = api_response.headers
+                    st.session_state["api_quota_max"] = res_headers.get("x-ratelimit-requests-limit", "100")
+                    st.session_state["api_quota_left"] = res_headers.get("x-ratelimit-requests-remaining", "N/A")
+                    
+                    try:
+                        limit_val = int(res_headers.get("x-ratelimit-requests-limit", 0))
+                    except ValueError:
+                        limit_val = 0
+                    st.session_state["api_account_tier"] = "Active Subscription" if limit_val > 100 else "Free Plan Tier"
+                    
+                    api_data = api_response.json()
+                    compiled_api_rows = []
+                    
+                    if "response" in api_data and api_data["response"]:
+                        for item in api_data["response"]:
+                            f_meta = item.get("fixture", {})
+                            teams = item.get("teams", {})
+                            goals = item.get("goals", {})
+                            stats_list = item.get("statistics", [])
+                            
+                            s_dict = {}
+                            for s_entry in stats_list:
+                                team_name = s_entry.get("team", {}).get("name")
+                                actual_stats = s_entry.get("statistics", [])
+                                if team_name and actual_stats:
+                                    s_dict[team_name] = {st_item["type"]: st_item["value"] for st_item in actual_stats if "type" in st_item}
+                            
+                            h_name = teams.get("home", {}).get("name", "Unknown Home")
+                            a_name = teams.get("away", {}).get("name", "Unknown Away")
+                            h_s = s_dict.get(h_name, {})
+                            a_s = s_dict.get(a_name, {})
+                            
+                            def get_pct(w, t):
+                                if w is None or t is None: return 0.50
+                                try:
+                                    w_clean = float(str(w).replace("%", "").strip())
+                                    t_clean = float(str(t).replace("%", "").strip())
+                                    return round(w_clean / max(1.0, t_clean), 2)
+                                except: return 0.50
+                            
+                            row_dict = {
+                                "league_country": target_sync_country, "match_timestamp": f_meta.get("date", datetime.datetime.now().isoformat()),
+                                "home_team": h_name, "away_team": a_name,
+                                "home_goals": goals.get("home") if goals.get("home") is not None else np.nan,
+                                "away_goals": goals.get("away") if goals.get("away") is not None else np.nan,
+                                "home_sot": float(h_s.get("Shots on Goal", 0)) if (h_s.get("Shots on Goal") is not None and "Upcoming" not in sync_mode) else np.nan,
+                                "away_sot": float(a_s.get("Shots on Goal", 0)) if (a_s.get("Shots on Goal") is not None and "Upcoming" not in sync_mode) else np.nan,
+                                "home_big_chances": float(h_s.get("Big Chances Created", 0)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_big_chances": float(a_s.get("Big Chances Created", 0)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_box_touches": float(h_s.get("Touches in Opposition Box", 15)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_box_touches": float(a_s.get("Touches in Opposition Box", 15)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_through_passes": float(h_s.get("Through Passes", 2)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_through_passes": float(a_s.get("Through Passes", 2)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_final_third_entries": float(h_s.get("Final Third Entries", 35)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_final_third_entries": float(h_s.get("Final Third Entries", 35)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_interceptions": float(h_s.get("Interceptions", 12)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_interceptions": float(a_s.get("Interceptions", 12)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_recoveries": float(h_s.get("Ball Recoveries", 45)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_recoveries": float(a_s.get("Ball Recoveries", 45)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_saves": float(h_s.get("Goalkeeper Saves", 2)) if "Upcoming" not in sync_mode else np.nan,
+                                "away_saves": float(a_s.get("Goalkeeper Saves", 2)) if "Upcoming" not in sync_mode else np.nan,
+                                "home_ground_duels_won_pct": get_pct(h_s.get("Ground Duels Won"), h_s.get("Ground Duels Total")),
+                                "away_ground_duels_won_pct": get_pct(a_s.get("Ground Duels Won"), a_s.get("Ground Duels Total")),
+                                "home_aerial_duels_won_pct": get_pct(h_s.get("Aerial Duels Won"), h_s.get("Aerial Duels Total")),
+                                "away_aerial_duels_won_pct": get_pct(a_s.get("Aerial Duels Won"), a_s.get("Aerial Duels Total")),
+                                "home_dribbles_won_pct": get_pct(h_s.get("Successful Dribbles"), h_s.get("Total Dribbles")),
+                                "away_dribbles_won_pct": get_pct(h_s.get("Successful Dribbles"), h_s.get("Total Dribbles")),
+                                "home_tackles_won_pct": get_pct(h_s.get("Tackles Won"), h_s.get("Total Tackles")),
+                                "away_tackles_won_pct": get_pct(a_s.get("Tackles Won"), a_s.get("Total Tackles")),
+                                "home_passes_final_third_pct": get_pct(h_s.get("Passes Accurate"), h_s.get("Total Passes")),
+                                "away_passes_final_third_pct": get_pct(a_s.get("Passes Accurate"), f"{h_s.get('Total Passes', 1)}") if "Upcoming" in sync_mode else get_pct(a_s.get("Passes Accurate"), a_s.get("Total Passes")),
+                                "home_rest_days": 5, "away_rest_days": 5
+                            }
+                            compiled_api_rows.append(row_dict)
+                            
+                    if compiled_api_rows:
+                        new_api_df = pd.DataFrame(compiled_api_rows)
+                        st.session_state["api_downloaded_data"] = new_api_df
+                        
+                        storage_path = "master_sisonke_database.csv"
+                        if os.path.exists(storage_path):
+                            try:
+                                existing_disk_df = pd.read_csv(storage_path)
+                                combined_disk_df = pd.concat([existing_disk_df, new_api_df], ignore_index=True)
+                                combined_disk_df.drop_duplicates(subset=["league_country", "match_timestamp", "home_team", "away_team"], keep="last", inplace=True)
+                                combined_disk_df.to_csv(storage_path, index=False)
+                                st.sidebar.success("💾 Server disk copy successfully updated in background layout.")
+                            except Exception as disk_err:
+                                st.sidebar.error(f"Write failure: {disk_err}")
+                        else:
+                            new_api_df.to_csv(storage_path, index=False)
+                            st.sidebar.success("📁 Local database created on hard drive partition.")
+                        st.success("⚡ SUCCESS! Network pull fully completed and saved to disk.")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ No data columns received from the API query parameter combinations.")
             except Exception as api_err:
                 st.error(f"Handshake Timeout or Error: {api_err}")
                 # --- DATA CONTROL ROOM INPUT CONVERGENCE LAYER ---
@@ -238,8 +242,9 @@ if uploaded_file is not None:
         uploaded_file.seek(0)
         raw_lines = [line.decode("utf-8").strip() for line in uploaded_file.readlines()]
         
-        if raw_lines:
-            header_line = raw_lines
+        if raw_lines and len(raw_lines) > 0:
+            # FIXED: Explicit list extraction to completely resolve list string split error crashes
+            header_line = str(raw_lines[0])
             headers = header_line.split(",")
             target_column_count = len(headers)
             cleaned_lines = [header_line]
@@ -263,9 +268,41 @@ if uploaded_file is not None:
             corrected_csv_data = io.StringIO("\n".join(cleaned_lines))
             manual_upload_df = pd.read_csv(corrected_csv_data, engine='python')
             
+            # === FIXED: AUTOMATED TIER 2 STRUCTURAL SHIELD ===
+            # If a Tier-2 file is missing columns, dynamically generate them using safe industry baselines
+            DEFAULT_TIER2_FALLBACKS = {
+                "home_goals": np.nan, "away_goals": np.nan,
+                "home_sot": 4.0, "away_sot": 3.5,
+                "home_big_chances": 1.2, "away_big_chances": 0.9,
+                "home_box_touches": 16.0, "away_box_touches": 13.0,
+                "home_through_passes": 1.5, "away_through_passes": 1.1,
+                "home_final_third_entries": 32.0, "away_final_third_entries": 28.0,
+                "home_interceptions": 11.0, "away_interceptions": 12.0,
+                "home_recoveries": 48.0, "away_recoveries": 46.0,
+                "home_saves": 2.5, "away_saves": 2.8,
+                "home_ground_duels_won_pct": 0.50, "away_ground_duels_won_pct": 0.50,
+                "home_aerial_duels_won_pct": 0.50, "away_aerial_duels_won_pct": 0.50,
+                "home_dribbles_won_pct": 0.50, "away_dribbles_won_pct": 0.50,
+                "home_tackles_won_pct": 0.52, "away_tackles_won_pct": 0.52,
+                "home_passes_final_third_pct": 0.68, "away_passes_final_third_pct": 0.65,
+                "home_rest_days": 5.0, "away_rest_days": 5.0
+            }
+            
+            tier2_repaired_counter = 0
+            for mandatory_col, fallback_val in DEFAULT_TIER2_FALLBACKS.items():
+                if mandatory_col not in manual_upload_df.columns:
+                    manual_upload_df[mandatory_col] = fallback_val
+                    tier2_repaired_counter += 1
+                else:
+                    manual_upload_df[mandatory_col] = manual_upload_df[mandatory_col].fillna(fallback_val)
+            
             full_validation_df = pd.concat([full_validation_df, manual_upload_df], ignore_index=True)
             is_valid_data = True
-            st.sidebar.success(f"Loaded {len(manual_upload_df)} matches!")
+            
+            if tier2_repaired_counter > 0:
+                st.sidebar.warning(f"⚠️ Tier-2 Shield Active: Imputed {tier2_repaired_counter} metrics.")
+            st.sidebar.success(f"Loaded {len(manual_upload_df)} matches successfully!")
+            
     except Exception as e:
         st.error(f"Manual Ingestion Shield Error: {e}")
 
@@ -289,7 +326,8 @@ if is_valid_data and not full_validation_df.empty:
     ]
     for col in numeric_target_columns:
         if col in full_validation_df.columns:
-            full_validation_df[col] = pd.to_numeric(full_validation_df[col], errors='coerce').astype('float64')
+            full_validation_df[col] = pd.to_numeric(full_validation_df[col], errors='coerce')
+            full_validation_df[col] = full_validation_df[col].fillna(0.0 if "pct" not in col else 0.50).astype('float64')
 
     # === DYNAMIC OVERALL MODEL ACCURACY ENGINE ===
     settled_games = full_validation_df.dropna(subset=["home_goals", "away_goals"]).copy()
@@ -479,13 +517,13 @@ with tab_pred:
                         value_status_tag = "🔥 HIGH VALUE"
                         premium_elite_kelly = round(raw_individual_kelly * 0.25 * 100, 2)
                         calculated_stake_allocation_pct = max(0.5, min(5.0, premium_elite_kelly))
-                        # FIXED: High value records now append all 5 unified elements
+                        # High value records append all 5 unified elements
                         qualified_projections.append((label, calculated_ev, m_prob, b_odds, calculated_stake_allocation_pct))
                     
                     # 4. Intermediate standard market entry allowance tier
                     elif calculated_ev > 0.0:
                         value_status_tag = "📊 ACCEPTABLE VALUE (MONITOR)"
-                        # FIXED: Acceptable values now append 5 uniform positions to prevent tuple sorting errors
+                        # Acceptable values append 5 uniform positions to prevent tuple sorting errors
                         qualified_projections.append((label, calculated_ev, m_prob, b_odds, calculated_stake_allocation_pct))
                     
                     # 5. Core Inefficiency Deficit Route
@@ -560,7 +598,7 @@ with tab_pred:
                         st.info("No single scoreline variant has crossed the baseline evaluation limit.")
                 
                 if qualified_projections and confidence >= confidence_floor_input:
-                    # FIXED: Sorting by EV element (index 1) to avoid tuple mismatched alignment shape crashes
+                    # Sorting by EV element (index 1) to avoid tuple mismatched alignment shape crashes
                     qualified_projections.sort(key=lambda x: x[1], reverse=True)
                     best_pick, best_ev, best_prob, best_odds, fractional_scale_stake = qualified_projections[0]
                     optimal_bet = best_pick
@@ -568,7 +606,7 @@ with tab_pred:
                 else: 
                     optimal_bet, best_ev, fractional_scale_stake, best_prob = "NO COMPREHENSIVE SELECTION MET FLOORS", 0.0, 0.0, 0.0
                     bet_rec = "❌ NO BET"
-                if "HIGH" in bet_rec or "MONITOR" in bet_rec:
+                                    if "HIGH" in bet_rec or "MONITOR" in bet_rec:
                     try:
                         email_body = (
                             f"========================================\n"
