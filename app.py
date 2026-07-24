@@ -396,21 +396,22 @@ with tab_past:
                 a_att = a_s.get("att_strength_goals", 1.0)
                 h_box = h_s.get("box_threat", 12.0)
                 
-                if h_att > a_att * 1.25:
-                    insight_lines.append(f"• **Dominant Threat Area**: {target['home_team']}'s attacking index ({h_att:.2f}) heavily outclasses the visitors due to superior Final Third entries and an average Box Threat metric of {h_box:.1f}.")
-                elif a_att > h_att * 1.25:
-                    insight_lines.append(f"• **Dominant Threat Area**: {target['away_team']}'s offensive efficiency ({a_att:.2f}) proves superior. Their final-third progression metrics outscale the hosts' backline layout.")
-            else: 
-                insight_lines.append("• **Balanced Attacking Structure**: Both teams display closely matched offensive process metrics, indicating an even midfield matchup.")
-                
-                st.markdown(f'<div class="insight-box">{"<br><br>".join(insight_lines)}</div>', unsafe_allow_html=True)
+                        # --- Attacking Insights Logic ---
+        if h_att > a_att * 1.25:
+            insight_lines.append(f"• **Dominant Threat Area**: {target['home_team']}'s attacking index ({h_att:.2f}) heavily outclasses the visitors due to superior Final Third entries and an average Box Threat metric of {h_box:.1f}.")
+        elif a_att > h_att * 1.25:
+            insight_lines.append(f"• **Dominant Threat Area**: {target['away_team']}'s offensive efficiency ({a_att:.2f}) proves superior. Their final-third progression metrics outscale the hosts' backline layout.")
+        else: 
+            insight_lines.append("• **Balanced Attacking Structure**: Both teams display closely matched offensive process metrics, indicating an even midfield matchup.")
             
-            with c_r:
-                st.markdown("### 🎫 Calibrated Ticket Slip")
-                # Cleaned up alignment inside the 'with' block
-                ticket = f"MATCH: {target['home_team']} vs {target['away_team']}\nPOSITION: {optimal_bet}\nSTAKE: {fractional_scale_stake}%"
-                st.text_area("Ticket Log Slip", value=ticket, height=200)
+        # --- UI Rendering Block ---
+        st.markdown(f'<div class="insight-box">{"<br><br>".join(insight_lines)}</div>', unsafe_allow_html=True)
+        
+        with c_r:
+            st.markdown("### 🎫 Calibrated Ticket Slip")
+            ticket = f"MATCH: {target['home_team']} vs {target['away_team']}\nPOSITION: {optimal_bet}\nSTAKE: {fractional_scale_stake}%"
+            st.text_area("Ticket Log Slip", value=ticket, height=200)
 
-        # ✅ FIXED: Shifted left to match the outer 'if' block checking for valid matches
-        else:
-            st.info("No fixtures found.")
+    # --- Outer Fallback ---
+    else:
+        st.info("No fixtures found.")
