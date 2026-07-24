@@ -413,5 +413,5 @@ with tab_past:
             st.text_area("Ticket Log Slip", value=ticket, height=200)
 
     # --- Outer Fallback ---
-   else:
+     else:
         st.info("No fixtures found.")
