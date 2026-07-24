@@ -249,11 +249,11 @@ if uploaded_file is not None:
                 current_count = len(parts)
                 
                 if current_count > target_column_count:
-                    # Strip out trailing metrics causing data room mismatches
+                    # Strip out trailing fields causing data room mismatches
                     repaired_parts = parts[:target_column_count]
                     cleaned_lines.append(",".join(repaired_parts))
                 elif current_count < target_column_count:
-                    # Pad arrays out with default spaces to avoid index failures
+                    # Pad arrays out with default empty strings to avoid index failures
                     padding_needed = target_column_count - current_count
                     repaired_parts = parts + [""] * padding_needed
                     cleaned_lines.append(",".join(repaired_parts))
@@ -277,8 +277,8 @@ if is_valid_data and not full_validation_df.empty:
     full_validation_df.drop_duplicates(subset=["league_country", "match_timestamp", "home_team", "away_team"], keep="last", inplace=True)
     full_validation_df["league_country"] = full_validation_df["league_country"].astype(str).str.strip()
     
-    # === FIXED CRITICAL NUMERIC ENFORCEMENT SHIELD ===
-    # Forcing all sports performance tracking vectors to treat blank text strings as valid numeric NaNs
+    # === CRITICAL NUMERIC ENFORCEMENT SHIELD ===
+    # Forcing all sports performance tracking vectors to treat blank text strings as valid numeric float64 NaNs
     numeric_target_columns = [
         "home_goals", "away_goals", "home_sot", "away_sot", "home_big_chances", "away_big_chances", 
         "home_box_touches", "away_box_touches", "home_through_passes", "away_through_passes", 
@@ -369,7 +369,10 @@ with tab_pred:
                 prob_matrix = res["raw_matrix"]
                 
                 over_25_p, btts_yes_p, home_cs_p, away_cs_p = 0.0, 0.0, 0.0, 0.0
-                max_r, max_a = prob_matrix.shape, prob_matrix.shape
+                
+                # FIXED: Extracted specific dimensions from the matrix shape tuple using discrete index offsets to resolve type errors
+                max_r = prob_matrix.shape[0]  # Total row count (Home Goals baseline dimensions)
+                max_a = prob_matrix.shape[1]  # Total column count (Away Goals baseline dimensions)
                 
                 for r_idx in range(max_r):
                     for a_idx in range(max_a):
@@ -399,9 +402,8 @@ with tab_pred:
                         qualified_projections.append((label, calculated_ev, m_prob, b_odds))
                 
                 if qualified_projections:
-                    # FIXED: Explicit sorting tracking to extract maximum EV allocations correctly
-                    qualified_projections.sort(key=lambda x: x, reverse=True)
-                    best_pick, best_ev, best_prob, best_odds = qualified_projections
+                    qualified_projections.sort(key=lambda x: x[1], reverse=True)
+                    best_pick, best_ev, best_prob, best_odds = qualified_projections[0]
                     raw_kelly = ((best_prob * best_odds) - 1.0) / (best_odds - 1.0) if best_odds > 1.0 else 0.0
                     fractional_scale_stake = max(0.5, min(5.0, round(raw_kelly * 0.25 * 100, 2)))
                     optimal_bet = best_pick
