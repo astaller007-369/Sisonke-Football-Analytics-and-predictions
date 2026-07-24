@@ -403,7 +403,7 @@ with tab_past:
             else: 
                 insight_lines.append("• **Balanced Attacking Structure**: Both teams display closely matched offensive process metrics, indicating an even midfield matchup.")
                 
-            st.markdown(f'<div class="insight-box">{"<br><br>".join(insight_lines)}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="insight-box">{"<br><br>".join(insight_lines)}</div>', unsafe_allow_html=True)
             
             with c_r:
                 st.markdown("### 🎫 Calibrated Ticket Slip")
