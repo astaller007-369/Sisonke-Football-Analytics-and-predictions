@@ -606,7 +606,7 @@ with tab_pred:
                 else: 
                     optimal_bet, best_ev, fractional_scale_stake, best_prob = "NO COMPREHENSIVE SELECTION MET FLOORS", 0.0, 0.0, 0.0
                     bet_rec = "❌ NO BET"
-                                    if "HIGH" in bet_rec or "MONITOR" in bet_rec:
+                if "HIGH" in bet_rec or "MONITOR" in bet_rec:
                     try:
                         email_body = (
                             f"========================================\n"
