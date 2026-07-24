@@ -400,7 +400,7 @@ with tab_past:
                     insight_lines.append(f"• **Dominant Threat Area**: {target['home_team']}'s attacking index ({h_att:.2f}) heavily outclasses the visitors due to superior Final Third entries and an average Box Threat metric of {h_box:.1f}.")
                 elif a_att > h_att * 1.25:
                     insight_lines.append(f"• **Dominant Threat Area**: {target['away_team']}'s offensive efficiency ({a_att:.2f}) proves superior. Their final-third progression metrics outscale the hosts' backline layout.")
-                            else: 
+            else: 
                 insight_lines.append("• **Balanced Attacking Structure**: Both teams display closely matched offensive process metrics, indicating an even midfield matchup.")
                 
             st.markdown(f'<div class="insight-box">{"<br><br>".join(insight_lines)}</div>', unsafe_allow_html=True)
