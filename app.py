@@ -276,6 +276,23 @@ if st.session_state["api_downloaded_data"] is not None:
 if is_valid_data and not full_validation_df.empty:
     full_validation_df.drop_duplicates(subset=["league_country", "match_timestamp", "home_team", "away_team"], keep="last", inplace=True)
     full_validation_df["league_country"] = full_validation_df["league_country"].astype(str).str.strip()
+    
+    # === FIXED CRITICAL NUMERIC ENFORCEMENT SHIELD ===
+    # Forcing all sports performance tracking vectors to treat blank text strings as valid numeric NaNs
+    numeric_target_columns = [
+        "home_goals", "away_goals", "home_sot", "away_sot", "home_big_chances", "away_big_chances", 
+        "home_box_touches", "away_box_touches", "home_through_passes", "away_through_passes", 
+        "home_final_third_entries", "away_final_third_entries", "home_interceptions", "away_interceptions", 
+        "home_recoveries", "away_recoveries", "home_saves", "away_saves", "home_ground_duels_won_pct", 
+        "away_ground_duels_won_pct", "home_aerial_duels_won_pct", "away_aerial_duels_won_pct", 
+        "home_dribbles_won_pct", "away_dribbles_won_pct", "home_tackles_won_pct", "away_tackles_won_pct", 
+        "home_passes_final_third_pct", "away_passes_final_third_pct", "home_rest_days", "away_rest_days"
+    ]
+    for col in numeric_target_columns:
+        if col in full_validation_df.columns:
+            # Converts any unparsed strings or padded empty inputs safely to float64 numbers (or NaN)
+            full_validation_df[col] = pd.to_numeric(full_validation_df[col], errors='coerce').astype('float64')
+
     uploaded_leagues = sorted(list(full_validation_df["league_country"].dropna().unique()))
 else:
     st.info("📂 Data Control Room: Drop your master match CSV file into the uploader or click 'Run Live League Sync' to start pulling data.")
